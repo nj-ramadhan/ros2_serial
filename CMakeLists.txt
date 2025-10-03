@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(serial)
 
+set(CATKIN_SYMLINK_INSTALL "" CACHE INTERNAL "")
+set(CATKIN_INSTALL_INTO_PREFIX_ROOT "" CACHE INTERNAL "")
+
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
