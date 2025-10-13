@@ -1,19 +1,24 @@
 cmake_minimum_required(VERSION 3.8)
 project(serial)
 
-# Default to C++14 (ROS 2 supports C++14 or higher)
+# === Suppress ROS 1 (Catkin) variable warnings ===
+# Consume common Catkin variables to prevent "not used" warnings
+set(CATKIN_INSTALL_INTO_PREFIX_ROOT "" CACHE INTERNAL "")
+set(CATKIN_PACKAGE_PREFIX "" CACHE INTERNAL "")
+set(CATKIN_BUILD_BINARY_PACKAGE "" CACHE INTERNAL "")
+
+# Default to C++17 for ROS 2 Jazzy (optional but recommended)
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Required for ROS 2 packages
 find_package(ament_cmake REQUIRED)
 
-# Platform-specific configuration
+# Platform-specific libraries and sources
 if(APPLE)
   find_library(IOKIT_LIBRARY IOKit REQUIRED)
   find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
@@ -41,7 +46,7 @@ else()
   message(FATAL_ERROR "Unsupported platform")
 endif()
 
-# Build the serial library
+# Build the library
 add_library(${PROJECT_NAME} ${serial_SRCS})
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -50,7 +55,7 @@ target_include_directories(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} ${PLATFORM_LIBRARIES})
 
-# Optional: Build example (only if needed in ROS 2 context)
+# Example executable (optional)
 add_executable(serial_example examples/serial_example.cc)
 target_link_libraries(serial_example ${PROJECT_NAME})
 target_include_directories(serial_example PRIVATE include)
@@ -77,11 +82,10 @@ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 
-# Testing (optional)
+# Testing
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-  # add_subdirectory(tests)  # Uncomment if you have tests
 endif()
 
 ament_package()
