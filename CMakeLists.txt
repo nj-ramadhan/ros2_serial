@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(serial)
 
-# Default to C++14
+# Default to C++14 (ROS 2 supports C++14 or higher)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -10,12 +10,13 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# Required for ROS 2 packages
 find_package(ament_cmake REQUIRED)
 
-# Platform-specific libraries and sources
+# Platform-specific configuration
 if(APPLE)
-  find_library(IOKIT_LIBRARY IOKit)
-  find_library(FOUNDATION_LIBRARY Foundation)
+  find_library(IOKIT_LIBRARY IOKit REQUIRED)
+  find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
   set(serial_SRCS
     src/serial.cc
     src/impl/unix.cc
@@ -37,10 +38,10 @@ elseif(WIN32)
   )
   set(PLATFORM_LIBRARIES setupapi)
 else()
-  set(serial_SRCS src/serial.cc)
-  set(PLATFORM_LIBRARIES "")
+  message(FATAL_ERROR "Unsupported platform")
 endif()
 
+# Build the serial library
 add_library(${PROJECT_NAME} ${serial_SRCS})
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -49,10 +50,12 @@ target_include_directories(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} ${PLATFORM_LIBRARIES})
 
+# Optional: Build example (only if needed in ROS 2 context)
 add_executable(serial_example examples/serial_example.cc)
 target_link_libraries(serial_example ${PROJECT_NAME})
 target_include_directories(serial_example PRIVATE include)
 
+# Install rules
 install(TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
   LIBRARY DESTINATION lib
@@ -69,13 +72,16 @@ install(TARGETS serial_example
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
+# Export for downstream ROS 2 packages
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
 
+# Testing (optional)
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-  # add_subdirectory(tests) # Uncomment if you have tests
+  # add_subdirectory(tests)  # Uncomment if you have tests
 endif()
 
 ament_package()
